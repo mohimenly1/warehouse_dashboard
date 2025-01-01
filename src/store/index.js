@@ -24,10 +24,12 @@ const authModule = {
             state.name = user.name;
             state.username = user.username;
             state.warehouse_id = user.warehouse_id;
+            state.warehouse_name = user.warehouse_name;
 
             localStorage.setItem('user_id', user.id);
             localStorage.setItem('user_name', user.name);
             localStorage.setItem('username', user.username);
+            localStorage.setItem('warehouse_name', user.warehouse_name);
             localStorage.setItem('warehouse_id', user.warehouse_id); // Store warehouse_id
         },
         CLEAR_AUTH_DATA(state) {
@@ -43,6 +45,7 @@ const authModule = {
             localStorage.removeItem('user_name');
             localStorage.removeItem('username');
             localStorage.removeItem('warehouse_id');
+            localStorage.removeItem('warehouse_name');
         },
         SET_WAREHOUSE_DATA(state, { warehouse_id, warehouse_name }) {
             state.warehouse_id = warehouse_id;

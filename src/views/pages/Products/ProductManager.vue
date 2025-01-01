@@ -9,6 +9,13 @@ const store = useStore(); // Get the Vuex store instance
 const categories = ref([]); // Categories list
 
 const userType = computed(() => store.getters['auth/userType']);
+const storageRecord = ref({
+    quantity: null,
+    entry_date: null,
+    expiry_date: null
+});
+
+// const statuses = ref([]); // Add your statuses
 
 async function fetchProducts() {
     try {
@@ -45,6 +52,7 @@ const toast = useToast();
 const dt = ref();
 const products = ref();
 const productDialog = ref(false);
+const productDialogUpdate = ref(false);
 const deleteProductDialog = ref(false);
 const deleteProductsDialog = ref(false);
 const product = ref({});
@@ -120,9 +128,72 @@ function saveProduct() {
     }
 }
 
-function editProduct(prod) {
-    product.value = { ...prod };
-    productDialog.value = true;
+async function editProduct(prod) {
+    const warehouse_id = localStorage.getItem('warehouse_id');
+
+    if (!warehouse_id) {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Warehouse ID is required', life: 3000 });
+        return;
+    }
+
+    try {
+        // Fetch product details along with the storage record from the API
+        const response = await apiClient.get(`/products/${prod.id}?warehouse_id=${warehouse_id}`);
+
+        // Extract product and storageRecord data
+        const fetchedProduct = response.data.product;
+        const storageRecordData = response.data;
+
+        // Populate the product object with the fetched product data
+        product.value = { ...fetchedProduct };
+
+        // Update storageRecord with the received data
+        storageRecord.value = {
+            quantity: storageRecordData.quantity,
+            entry_date: storageRecordData.entry_date,
+            expiry_date: storageRecordData.expiry_date
+        };
+
+        // alert(JSON.stringify(storageRecord.value)); // Debugging storageRecord
+
+        productDialogUpdate.value = true;
+    } catch (error) {
+        console.error('Error fetching product details:', error);
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to fetch product details', life: 3000 });
+    }
+}
+
+async function updateProduct() {
+    const warehouse_id = localStorage.getItem('warehouse_id');
+
+    if (!warehouse_id) {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Warehouse ID is required', life: 3000 });
+        return;
+    }
+
+    try {
+        const payload = {
+            name: product.value.name,
+            description: product.value.description,
+            price: product.value.price,
+            wholesale_price: product.value.wholesale_price,
+            category_id: product.value.category_id,
+            warehouse_id: warehouse_id,
+            quantity: storageRecord.value.quantity,
+            entry_date: storageRecord.value.entry_date,
+            expiry_date: storageRecord.value.expiry_date
+        };
+
+        const response = await apiClient.put(`/products/${product.value.id}`, payload);
+
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Product updated successfully', life: 3000 });
+
+        productDialogUpdate.value = false; // Close the dialog after update
+        fetchProducts(); // Refresh product list
+    } catch (error) {
+        console.error('Error updating product:', error);
+        toast.add({ severity: 'error', summary: 'Error', detail: error.response.data.message || error.response.data.error, life: 3000 });
+    }
 }
 
 function confirmDeleteProduct(prod) {
@@ -131,10 +202,19 @@ function confirmDeleteProduct(prod) {
 }
 
 function deleteProduct() {
-    products.value = products.value.filter((val) => val.id !== product.value.id);
-    deleteProductDialog.value = false;
-    product.value = {};
-    toast.add({ severity: 'success', summary: 'Successful', detail: 'Product Deleted', life: 3000 });
+    apiClient
+        .delete(`/products/${product.value.id}`)
+        .then(() => {
+            // Remove the product from the local list
+            products.value = products.value.filter((val) => val.id !== product.value.id);
+            deleteProductDialog.value = false;
+            product.value = {};
+            toast.add({ severity: 'success', summary: 'Successful', detail: 'Product Deleted', life: 3000 });
+        })
+        .catch((error) => {
+            const errorMessage = error.response?.data?.error || 'Failed to delete product';
+            toast.add({ severity: 'error', summary: 'Error', detail: errorMessage, life: 5000 });
+        });
 }
 
 function findIndexById(id) {
@@ -305,6 +385,52 @@ function getStatusLabel(status) {
             <template #footer>
                 <Button label="إلغاء العملية" icon="pi pi-times" text @click="hideDialog" />
                 <Button label="حفظ" icon="pi pi-check" @click="saveProduct" />
+            </template>
+        </Dialog>
+
+        <Dialog v-model:visible="productDialogUpdate" :style="{ width: '450px' }" header="تعديل المنتج" :modal="true">
+            <div class="flex flex-col gap-6">
+                <img v-if="product.image" :src="product.image" :alt="product.image" class="block m-auto pb-4" />
+                <div>
+                    <label for="name" class="block font-bold mb-3">إسم المنتج</label>
+                    <InputText id="name" v-model.trim="product.name" required="true" autofocus :invalid="submitted && !product.name" fluid />
+                    <small v-if="submitted && !product.name" class="text-red-500">Name is required.</small>
+                </div>
+                <div>
+                    <label for="description" class="block font-bold mb-3">الوصف</label>
+                    <Textarea id="description" v-model="product.description" required="true" rows="3" cols="20" fluid />
+                </div>
+                <div>
+                    <label for="code" class="block font-bold mb-3">Code</label>
+                    <InputText id="code" v-model="product.code" required />
+                </div>
+                <div>
+                    <label for="quantity" class="block font-bold mb-3">الكمية</label>
+                    <InputNumber id="quantity" v-model="storageRecord.quantity" fluid />
+                </div>
+                <div>
+                    <label for="entryDate" class="block font-bold mb-3">تاريخ الدخول</label>
+                    <InputText id="entryDate" v-model="storageRecord.entry_date" type="date" fluid />
+                </div>
+                <div>
+                    <label for="expiryDate" class="block font-bold mb-3">تاريخ الانتهاء</label>
+                    <InputText id="expiryDate" v-model="storageRecord.expiry_date" type="date" fluid />
+                </div>
+                <div class="col-span-full lg:col-span-6">
+                    <div class="card">
+                        <div class="font-semibold text-right text-xl mb-4">صورة للمنتج</div>
+                        <input type="file" id="image" @change="(e) => (product.image = e.target.files[0])" accept="image/*" />
+                    </div>
+                </div>
+                <div>
+                    <label for="inventoryStatus" class="block font-bold mb-3">حالة المخزون</label>
+                    <Select id="inventoryStatus" v-model="product.status" :options="statuses" optionLabel="label" placeholder="Select a Status" fluid></Select>
+                </div>
+            </div>
+
+            <template #footer>
+                <Button label="إلغاء العملية" icon="pi pi-times" text @click="hideDialog" />
+                <Button label="حفظ" icon="pi pi-check" @click="updateProduct" />
             </template>
         </Dialog>
 

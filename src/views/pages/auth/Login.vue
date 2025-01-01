@@ -77,25 +77,32 @@ export default {
                     username: this.username,
                     password: this.password
                 });
+
                 const { auth_token, user } = response.data;
 
                 this.$store.commit('auth/SET_AUTH_TOKEN', auth_token);
                 this.$store.commit('auth/SET_USER_TYPE', user.user_type);
                 this.$store.commit('auth/SET_USER_DATA', user);
 
-                // Pass a query parameter to indicate login
                 this.$router.push({
                     name: 'dashboard',
                     query: { loginRedirect: true }
                 });
             } catch (error) {
                 if (error.response) {
-                    console.error('Login Failed:', error.response.data);
+                    console.error('Response Error:', error.response.data);
                 } else if (error.request) {
-                    console.error('No Response Received:', error.request);
+                    console.error('Request Error:', error.request);
                 } else {
-                    console.error('Error:', error);
+                    console.error('Unknown Error:', error.message);
                 }
+
+                this.$toast.add({
+                    severity: 'error',
+                    summary: 'Login Failed',
+                    detail: error.response?.data?.message || 'An error occurred.',
+                    life: 5000
+                });
             }
         }
     }

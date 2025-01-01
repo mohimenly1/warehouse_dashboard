@@ -48,7 +48,10 @@ const modelAdmin = ref([
         label: 'KEEP SPACE خدمات',
         items: [
             { label: 'المخازن', icon: 'pi pi-box pi-id-box', to: '/stocks' },
-            { label: 'إدارة المستخدمين', icon: 'pi pi-users pi-id-users', to: '/category-manager' }
+            { label: 'إدارة المستخدمين', icon: 'pi pi-users pi-id-users', to: '/all-users' },
+            { label: 'الاشتراكات', icon: 'pi pi-users pi-id-users', to: '/all-subscription' },
+            { label: 'اصدار كروت الاشتراك', icon: 'pi pi-users pi-id-users', to: '/generate-voucher' },
+            { label: 'احصائية ارباح الاشتراكات', icon: 'pi pi-users pi-id-users', to: '/profits' }
         ]
     }
 ]);

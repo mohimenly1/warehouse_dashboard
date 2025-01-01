@@ -67,22 +67,55 @@ export default {
                     user_type: this.dropdownValue.code
                 });
 
-                const { auth_token, user } = response.data;
+                const { user } = response.data;
 
-                // Update Vuex store with user data and auth token
-                this.$store.commit('auth/SET_AUTH_TOKEN', auth_token);
+                // Update Vuex store with user data
                 this.$store.commit('auth/SET_USER_TYPE', this.dropdownValue.code);
                 this.$store.commit('auth/SET_USER_DATA', user);
 
-                // Redirect to the warehouse info page
-                this.$router.push({ name: 'warehouseInfo' });
+                // Notify success
+                this.$toast.add({
+                    severity: 'success',
+                    summary: 'Registration Successful',
+                    detail: 'Awaiting admin approval and payment verification.',
+                    life: 5000
+                });
+
+                // Redirect to the next step
+                // this.$router.push({ name: 'warehouseInfo' });
+                this.$router.push({
+                    name: 'subscription',
+                    query: {
+                        user: JSON.stringify(this.user)
+                    }
+                });
             } catch (error) {
                 if (error.response) {
-                    console.error('Registration Failed:', error.response.data);
+                    // Handle validation or server errors
+                    const errorMessage = error.response.data.message || 'An error occurred.';
+                    const errorDetails = error.response.data.errors ? Object.values(error.response.data.errors).flat().join(', ') : '';
+                    this.$toast.add({
+                        severity: 'error',
+                        summary: 'Registration Failed',
+                        detail: `${errorMessage} ${errorDetails}`,
+                        life: 5000
+                    });
                 } else if (error.request) {
-                    console.error('No Response Received:', error.request);
+                    // No response from server
+                    this.$toast.add({
+                        severity: 'error',
+                        summary: 'Network Error',
+                        detail: 'No response received from the server.',
+                        life: 5000
+                    });
                 } else {
-                    console.error('Error:', error.message);
+                    // Other errors
+                    this.$toast.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: error.message,
+                        life: 5000
+                    });
                 }
             }
         }

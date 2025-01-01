@@ -344,25 +344,17 @@ export default {
                 const user_id = localStorage.getItem('user_id');
                 const warehouseName = localStorage.getItem('warehouse_name');
 
-                // Check if warehouseId is present
                 if (!warehouseId) {
                     console.error('Error: Warehouse ID is missing in localStorage.');
                     alert('Warehouse ID is not set. Please ensure it is configured before proceeding.');
                     return;
                 }
 
-                // Log the retrieved values for debugging
-                console.log('Retrieved Warehouse ID:', warehouseId);
-                console.log('Retrieved User ID:', user_id);
-                console.log('Retrieved Warehouse Name:', warehouseName);
-
-                // Prepare the payload
                 const payload = {
                     warehouse_id: warehouseId,
                     user_id,
                     warehouse_name: warehouseName,
                     order_number: `ORD-${Date.now()}`,
-                    // receipt_date: new Date().toISOString(),
                     supplier_name: this.form.supplier_name,
                     supplier_address: this.form.supplier_address,
                     notes: this.form.notes,
@@ -374,29 +366,26 @@ export default {
                         retail_price: item.retail_price,
                         batch_number: item.batch_number,
                         expiration_date: item.expiration_date,
-                        category_id: item.category_id // Include category_id
+                        category_id: item.category_id
                     }))
                 };
 
-                // Log the payload for debugging
-                console.log('Payload to be sent:', payload);
-
-                // Make the API request
                 const response = await apiClient.post('/receipt-orders', payload);
 
-                // Handle the response
-                if (response.status === 200) {
+                if (response.status === 201) {
                     console.log('Receipt order submitted successfully');
                     alert('Receipt order submitted successfully!');
                     this.closeDialog();
-                } else {
-                    console.error('Failed to submit the receipt order');
-                    alert('Failed to submit the receipt order. Please try again.');
                 }
+                // this.closeDialog();
             } catch (error) {
-                // Log and display any errors encountered
-                console.error('Error submitting the receipt order:', error);
-                alert('An error occurred while submitting the receipt order. Please check the console for details.');
+                if (error.response && error.response.status === 422) {
+                    console.error('Validation error:', error.response.data.message || error.response.data.error);
+                    alert(`Error: ${error.response.data.message || error.response.data.error}`);
+                } else {
+                    console.error('An unexpected error occurred:', error);
+                    alert('An unexpected error occurred. Please try again.');
+                }
             }
         }
     },

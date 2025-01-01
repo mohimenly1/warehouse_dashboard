@@ -160,9 +160,33 @@ const router = createRouter({
                     meta: { requiresAuth: true }
                 },
                 {
+                    path: '/all-users',
+                    name: 'all-users',
+                    component: () => import('@/views/pages/Users/AllUsers.vue'),
+                    meta: { requiresAuth: true }
+                },
+                {
                     path: '/inventory-manager',
                     name: 'inventory-manager',
                     component: () => import('@/views/pages/Inventory/InventoryManagement.vue'),
+                    meta: { requiresAuth: true }
+                },
+                {
+                    path: '/all-subscription',
+                    name: 'Allsubscription',
+                    component: () => import('@/views/pages/Voucher/SubscriptionList.vue'),
+                    meta: { requiresAuth: true }
+                },
+                {
+                    path: '/generate-voucher',
+                    name: 'generateVoucher',
+                    component: () => import('@/views/pages/Voucher/Voucher.vue'),
+                    meta: { requiresAuth: true }
+                },
+                {
+                    path: '/profits',
+                    name: 'profits',
+                    component: () => import('@/views/pages/Profits/Profits.vue'),
                     meta: { requiresAuth: true }
                 }
             ]
@@ -203,6 +227,17 @@ const router = createRouter({
             path: '/auth/access',
             name: 'accessDenied',
             component: () => import('@/views/pages/auth/Access.vue')
+        },
+        {
+            path: '/subscription',
+            name: 'subscription',
+            component: () => import('@/views/pages/auth/Subscription.vue')
+        },
+
+        {
+            path: '/success',
+            name: 'SuccessSubscription',
+            component: () => import('@/views/pages/auth/SuccessSubscription.vue')
         },
         {
             path: '/auth/error',
